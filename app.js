@@ -4,7 +4,12 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-var _= require("lodash");
+var _ = require("lodash");
+const passport = require("passport");
+var LocalStrategy = require("passport-local");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const session = require("express-session");
+const bcrypt = require("bcrypt");
 
 
 
@@ -16,7 +21,7 @@ const app = express();
 
 app.set('view engine', 'ejs');
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 mongoose.connect("mongodb+srv://holtk29:Test-123@cluster0.2q1l8tr.mongodb.net/blogDB");
@@ -30,63 +35,56 @@ const Post = new mongoose.model("Post", blogSchema);
 
 let posts = [];
 
-app.get("/", function(req, res){
-  Post.find({}, function(err, foundBlog){
-    res.render("home", {newContent: homeStartingContent, allPosts: foundBlog});
+app.get("/", function (req, res) {
+  res.render("home");
+});
+
+app.get("/userhome", function (req, res) {
+  Post.find({}, function (err, foundBlog) {
+    res.render("userhome", { newContent: homeStartingContent, allPosts: foundBlog });
   });
-  
+})
+
+app.get("/about", function (req, res) {
+  res.render("about", { newContent: aboutContent });
 });
 
-app.get("/about", function(req, res){
-  res.render("about", {newContent: aboutContent});
+app.get("/contact", function (req, res) {
+  res.render("contact", { newContact: contactContent });
 });
 
-app.get("/contact", function(req, res){
-  res.render("contact", {newContact: contactContent});
-});
-
-app.get("/compose", function(req, res){
+app.get("/compose", function (req, res) {
   res.render("compose");
 });
 
-app.post("/compose", function(req, res){
+app.post("/compose", function (req, res) {
   let newPost = {
     title: req.body.postTitle,
     content: req.body.postBody
   };
 
-  const newBlog = new Post({title: req.body.postTitle, content: req.body.postBody});
+  const newBlog = new Post({ title: req.body.postTitle, content: req.body.postBody });
   newBlog.save();
 
   posts.push(newPost);
   res.redirect("/");
 });
 
-app.get("/posts/:postId", function(req, res){
-  // posts.forEach(function(post){
-  //   let requestedTitle = _.lowerCase(req.params.postId);
-  //   let postTitle = _.lowerCase(post.title)
-  //   if (postTitle === requestedTitle)
-  //   {
-  //     res.render("post", {title: requestedTitle, content: post.content})
-  //     console.log(postTitle + " & " + requestedTitle + " is a match!");
-  //   }
-  // })
-    Post.find({}, function(err, foundBlogs){
-      foundBlogs.forEach(function(post){
-        let requestedTitle = _.lowerCase(req.params.postId);
-          let postTitle = _.lowerCase(post.title)
-          if (postTitle === requestedTitle)
-          {
-            res.render("post", {title: requestedTitle, content: post.content})
-            console.log(postTitle + " & " + requestedTitle + " is a match!");
-          }
-        console.log(post.title);
-      });
-      });
-   // });
+app.get("/posts/:postId", function (req, res) {
+
+  Post.find({}, function (err, foundBlogs) {
+    foundBlogs.forEach(function (post) {
+      let requestedTitle = _.lowerCase(req.params.postId);
+      let postTitle = _.lowerCase(post.title)
+      if (postTitle === requestedTitle) {
+        res.render("post", { title: requestedTitle, content: post.content })
+        console.log(postTitle + " & " + requestedTitle + " is a match!");
+      }
+      console.log(post.title);
+    });
+  });
 });
 
-app.listen(3000, function() {
+app.listen(3000, function () {
   console.log("Server started on port 3000");
 });
