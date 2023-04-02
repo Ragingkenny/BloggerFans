@@ -1,9 +1,9 @@
 <%- include("partials/header"); -%>
 <h1>
-    Welcome to BlogTown!
+    Go blog yourself!
 </h1>
 
-<form action="/userhome" method="post">
+<form action="/auth/google" method="post">
     <div class="box">
         <div class="input-group input-group-sm mb-3 typeField">
             <span class="input-group-text" id="inputGroup-sizing-sm">Email</span>
@@ -15,7 +15,15 @@
             <input type="text" class="form-control" aria-label="Sizing example input"
                 aria-describedby="inputGroup-sizing-sm">
         </div>
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="button">Login</button>
+            <button class="btn btn-primary" type="Submit">Continue with Google <i class="fa-brands fa-google"></i></button>
+          </div>
+        <div class="signup">
+            <p>Dont have an account? <a href="">Sign up</a></p>
+        </div>
     </div>
+    
 </form>
 
 
