@@ -2,7 +2,13 @@
 </div>
 <div class="footer-padding"></div>
   <div class="footer">
-    <p>Made with ❤️ by The App Brewery</p>
+    <% if (isAuthenticated) {%>
+      <ul class="nav justify-content-center myClass">
+        <li class="nav-item">
+          <a class="nav-link active logout" aria-current="page" href="/logout">Logout</a>
+        </li>
+      </ul>
+    <% } %>
   </div>
 </div>
 </body>

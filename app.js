@@ -2,82 +2,49 @@
 
 require("dotenv").config()
 const express = require("express");
-const bodyParser = require("body-parser");
 const ejs = require("ejs");
-const mongoose = require("mongoose");
 var _ = require("lodash");
 const passport = require("passport");
 var LocalStrategy = require("passport-local");
-const googleStrategy = require("./googleStrategy");
-const session = require("express-session");
 const bcrypt = require("bcrypt");
+const config = require("./config.js");
 
 const homeStartingContent = "Lacus vel facilisis volutpat est velit egestas dui id ornare. Semper auctor neque vitae tempus quam. Sit amet cursus sit amet dictum sit amet justo. Viverra tellus in hac habitasse. Imperdiet proin fermentum leo vel orci porta. Donec ultrices tincidunt arcu non sodales neque sodales ut. Mattis molestie a iaculis at erat pellentesque adipiscing. Magnis dis parturient montes nascetur ridiculus mus mauris vitae ultricies. Adipiscing elit ut aliquam purus sit amet luctus venenatis lectus. Ultrices vitae auctor eu augue ut lectus arcu bibendum at. Odio euismod lacinia at quis risus sed vulputate odio ut. Cursus mattis molestie a iaculis at erat pellentesque adipiscing.";
 const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pellentesque. Dictumst vestibulum rhoncus est pellentesque elit ullamcorper. Non diam phasellus vestibulum lorem sed. Platea dictumst quisque sagittis purus sit. Egestas sed sed risus pretium quam vulputate dignissim suspendisse. Mauris in aliquam sem fringilla. Semper risus in hendrerit gravida rutrum quisque non tellus orci. Amet massa vitae tortor condimentum lacinia quis vel eros. Enim ut tellus elementum sagittis vitae. Mauris ultrices eros in cursus turpis massa tincidunt dui.";
 const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rhoncus urna neque viverra justo nec ultrices. Arcu dui vivamus arcu felis bibendum. Consectetur adipiscing elit duis tristique. Risus viverra adipiscing at in tellus integer feugiat. Sapien nec sagittis aliquam malesuada bibendum arcu vitae. Consequat interdum varius sit amet mattis. Iaculis nunc sed augue lacus. Interdum posuere lorem ipsum dolor sit amet consectetur adipiscing elit. Pulvinar elementum integer enim neque. Ultrices gravida dictum fusce ut placerat orci nulla. Mauris in aliquam sem fringilla ut morbi tincidunt. Tortor posuere ac ut consequat semper viverra nam libero.";
 
 const app = express();
+const dbConnectionString = "mongodb+srv://holtk29:Test-123@cluster0.2q1l8tr.mongodb.net/blogDB";
+const sessionSecret = "Our little secret.";
 
-app.set('view engine', 'ejs');
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static("public"));
-
-app.set('trust proxy', 1);
-app.use(session({
-    secret: 'Our little secret.',
-    resave: true,
-    saveUninitialized: true,
-    //cookie: { secure: true }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-mongoose.connect("mongodb+srv://holtk29:Test-123@cluster0.2q1l8tr.mongodb.net/blogDB");
-
-const blogSchema = require("./blogSchema");
-
-const Post = new mongoose.model("Post", blogSchema);
-
+const Post = config(app, dbConnectionString, sessionSecret);
 let posts = [];
-
-const Users = require("./UserSchema");
-
-googleStrategy(passport, Users);
-
-passport.serializeUser(function (user, cb) {
-  process.nextTick(function () {
-      return cb(null, {
-          id: user.id,
-          username: user.username,
-          picture: user.picture
-      });
-  });
-});
-
-passport.deserializeUser(function (user, cb) {
-  process.nextTick(function () {
-      return cb(null, user);
-  });
-});
 
 app.post("/auth/google", passport.authenticate("google", { scope: ["profile"] } ));
 
 app.get("/auth/google/secrets",
-    passport.authenticate("google", { failureRedirect: "/" }),
-    function (req, res) {
-        // Successful authentication, redirect home.
-        console.log("This is the page");
-        res.redirect('/userhome');
-    });
+  passport.authenticate("google", { failureRedirect: "/" }),
+  function (req, res) {
+    // Successful authentication, redirect home.
+    console.log("This is the page");
+    res.redirect('/userhome');
+  });
+
+app.get("/logout", function (req, res) {
+  req.logOut(function (err) {
+    if (err) {
+      console.log("Logout error: " + err);
+    }
+  });
+  res.redirect("/");
+});
 
 app.get("/", function (req, res) {
   if (req.isAuthenticated()) {
     res.redirect("/userhome");
   }
   else {
-    res.render("home");
+    res.render("home", { isAuthenticated: req.isAuthenticated() });
   }
 });
 
@@ -87,8 +54,8 @@ app.post("/", function (req, res) {
 
 app.get("/userhome", function (req, res) {
   if (req.isAuthenticated()) {
-    Post.find({}, function (err, foundBlog) {
-      res.render("userhome", { newContent: homeStartingContent, allPosts: foundBlog });
+      Post.find({}, function (err, foundBlog) {
+      res.render("userhome", { newContent: homeStartingContent, allPosts: foundBlog, isAuthenticated: req.isAuthenticated() });
     });
 }
 else {
